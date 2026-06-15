@@ -19,7 +19,7 @@ jobs:
 
       - name: Install system deps
         run: |
-          sudo apt-get update
+          sudo apt-get update -o Acquire::AllowReleaseInfoChange=true || true
           sudo apt-get install -y libpango-1.0-0 libpangoft2-1.0-0 libcairo2 libgdk-pixbuf-2.0-0
 
       - name: Install Python deps

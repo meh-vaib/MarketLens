@@ -1,0 +1,170 @@
+# =============================================================================
+# Curated global news sources for the AI Market Intelligence Agent.
+# Add / remove freely - no code changes required.
+# =============================================================================
+
+rss_sources:
+  # --- Macro & top financial news ---
+  - name: Reuters Business
+    url: https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best
+    category: macro
+    region: global
+  - name: Reuters Markets
+    url: https://www.reutersagency.com/feed/?best-topics=markets&post_type=best
+    category: markets
+    region: global
+  - name: Yahoo Finance Top Stories
+    url: https://finance.yahoo.com/news/rssindex
+    category: markets
+    region: global
+  - name: Investing.com - All News
+    url: https://www.investing.com/rss/news.rss
+    category: markets
+    region: global
+  - name: Investing.com - Economy
+    url: https://www.investing.com/rss/news_14.rss
+    category: macro
+    region: global
+  - name: CNBC - Top News
+    url: https://www.cnbc.com/id/100003114/device/rss/rss.html
+    category: markets
+    region: us
+  - name: CNBC - Economy
+    url: https://www.cnbc.com/id/20910258/device/rss/rss.html
+    category: macro
+    region: us
+  - name: MarketWatch - Top Stories
+    url: https://feeds.marketwatch.com/marketwatch/topstories/
+    category: markets
+    region: us
+  - name: Financial Times - World
+    url: https://www.ft.com/world?format=rss
+    category: macro
+    region: global
+
+  # --- Central banks & policy ---
+  - name: Federal Reserve - Press Releases
+    url: https://www.federalreserve.gov/feeds/press_all.xml
+    category: central_bank
+    region: us
+  - name: ECB - Press
+    url: https://www.ecb.europa.eu/rss/press.html
+    category: central_bank
+    region: eu
+  - name: Bank of England - News
+    url: https://www.bankofengland.co.uk/rss/news
+    category: central_bank
+    region: uk
+  - name: Bank of Japan - News
+    url: https://www.boj.or.jp/en/rss/whatsnew.xml
+    category: central_bank
+    region: jp
+  - name: IMF - Press Releases
+    url: https://www.imf.org/en/News/RSS?Language=ENG&Series=Press%20Releases
+    category: macro
+    region: global
+  - name: World Bank - News
+    url: https://www.worldbank.org/en/news/all/rss
+    category: macro
+    region: global
+
+  # --- Geopolitics ---
+  - name: Reuters World
+    url: https://www.reutersagency.com/feed/?best-topics=political-general&post_type=best
+    category: geopolitics
+    region: global
+  - name: BBC - World
+    url: http://feeds.bbci.co.uk/news/world/rss.xml
+    category: geopolitics
+    region: global
+  - name: Al Jazeera - All
+    url: https://www.aljazeera.com/xml/rss/all.xml
+    category: geopolitics
+    region: global
+
+  # --- Equities & sectors ---
+  - name: SeekingAlpha - Market News
+    url: https://seekingalpha.com/market_currents.xml
+    category: equities
+    region: us
+  - name: Benzinga - News
+    url: https://www.benzinga.com/feed
+    category: equities
+    region: us
+
+  # --- Crypto / digital assets ---
+  - name: CoinDesk
+    url: https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml
+    category: crypto
+    region: global
+
+  # --- Energy & commodities ---
+  - name: OilPrice.com - Latest
+    url: https://oilprice.com/rss/main
+    category: commodities
+    region: global
+
+# =============================================================================
+# GDELT Project queries (free, no API key, ~100k global sources, 15-min refresh)
+# Docs: https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/
+# =============================================================================
+gdelt_sources:
+  - name: Macro & Monetary Policy
+    query: '("interest rate" OR inflation OR CPI OR GDP OR recession OR "Federal Reserve" OR FOMC OR ECB OR "Bank of Japan" OR "central bank" OR "monetary policy")'
+    timespan: 24h
+    sort: HybridRel
+    category: macro
+    region: global
+    enabled: true
+
+  - name: Geopolitics & Trade
+    query: '(sanctions OR tariff OR "trade war" OR OPEC OR "trade deal" OR ceasefire OR conflict OR "diplomatic talks" OR election OR coup)'
+    timespan: 24h
+    sort: HybridRel
+    category: geopolitics
+    region: global
+    enabled: true
+
+  - name: Markets & Cross-Asset
+    query: '("stock market" OR "S&P 500" OR Nasdaq OR "bond yield" OR "Treasury yields" OR commodities OR "oil price" OR Brent OR gold)'
+    timespan: 24h
+    sort: HybridRel
+    category: markets
+    region: global
+    enabled: true
+
+  - name: Corporate Earnings & M&A
+    query: '(earnings OR guidance OR "profit warning" OR merger OR acquisition OR buyback OR IPO OR bankruptcy)'
+    timespan: 24h
+    sort: HybridRel
+    category: equities
+    region: global
+    enabled: true
+
+  - name: Tech & AI
+    query: '(Nvidia OR OpenAI OR Anthropic OR "AI chip" OR semiconductor OR "data center" OR "Big Tech" OR Apple OR Microsoft OR Alphabet)'
+    timespan: 24h
+    sort: HybridRel
+    category: equities
+    region: global
+    enabled: true
+
+  - name: Energy & Commodities
+    query: '("oil supply" OR OPEC OR "crude oil" OR "natural gas" OR "iron ore" OR copper OR lithium OR "energy policy")'
+    timespan: 24h
+    sort: HybridRel
+    category: commodities
+    region: global
+    enabled: true
+
+# Optional REST endpoints (require API keys in .env)
+api_sources:
+  - name: NewsAPI - Business Headlines
+    type: newsapi
+    endpoint: https://newsapi.org/v2/top-headlines
+    params:
+      category: business
+      language: en
+      pageSize: 30
+    api_key_env: NEWSAPI_KEY
+    enabled: false

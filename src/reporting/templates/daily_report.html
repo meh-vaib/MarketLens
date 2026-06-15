@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Market Intelligence — {{ report.date }}</title>
+<style>
+  :root {
+    --bg: #0f1420;
+    --panel: #161c2c;
+    --panel-2: #1d2538;
+    --text: #e6e9f2;
+    --muted: #9aa3b8;
+    --accent: #5b8cff;
+    --high: #ff5e6c;
+    --medium: #ffb547;
+    --low: #62d489;
+    --bull: #3ec28f;
+    --bear: #ff6b6b;
+    --mixed: #c39bff;
+    --neutral: #8a93aa;
+    --border: #283149;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.55;
+  }
+  .container { max-width: 920px; margin: 0 auto; padding: 32px 24px 64px; }
+  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 32px; }
+  h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -0.02em; }
+  .subtitle { color: var(--muted); font-size: 14px; }
+  h2 { font-size: 20px; margin: 36px 0 14px; letter-spacing: -0.01em; }
+  h3 { font-size: 16px; margin: 0 0 6px; }
+
+  .summary {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--accent);
+    padding: 18px 22px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+  }
+  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .stat {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    flex: 1 1 180px;
+  }
+  .stat .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
+  .stat .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+
+  .event {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+  }
+  .event-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+  .event-title { font-size: 16px; font-weight: 600; }
+  .event-title a { color: var(--text); text-decoration: none; }
+  .event-title a:hover { color: var(--accent); }
+  .event-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
+  .event-body { margin-top: 10px; font-size: 14px; }
+  .event-body p { margin: 6px 0; }
+  .why { color: var(--text); }
+  .rationale { color: var(--muted); font-size: 13px; }
+
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    white-space: nowrap;
+  }
+  .badge.high { background: rgba(255,94,108,.15); border-color: var(--high); color: var(--high); }
+  .badge.medium { background: rgba(255,181,71,.15); border-color: var(--medium); color: var(--medium); }
+  .badge.low { background: rgba(98,212,137,.15); border-color: var(--low); color: var(--low); }
+  .badge.bullish { background: rgba(62,194,143,.15); border-color: var(--bull); color: var(--bull); }
+  .badge.bearish { background: rgba(255,107,107,.15); border-color: var(--bear); color: var(--bear); }
+  .badge.mixed { background: rgba(195,155,255,.15); border-color: var(--mixed); color: var(--mixed); }
+  .badge.neutral { background: rgba(138,147,170,.12); border-color: var(--neutral); color: var(--neutral); }
+
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .panel {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 18px;
+  }
+  .panel ul { margin: 8px 0 0; padding-left: 18px; }
+  .panel li { margin: 2px 0; color: var(--muted); }
+  .panel li b { color: var(--text); }
+
+  footer {
+    border-top: 1px solid var(--border);
+    margin-top: 40px; padding-top: 16px;
+    color: var(--muted); font-size: 12px;
+  }
+  @media (max-width: 700px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+{% macro render_event(e) -%}
+<div class="event">
+  <div class="event-head">
+    <div>
+      <div class="event-title"><a href="{{ e.item.url }}" target="_blank" rel="noopener">{{ e.analysis.headline or e.item.title }}</a></div>
+      <div class="event-meta">{{ e.item.source }}{% if e.item.published_at %} · {{ e.item.published_at.strftime("%Y-%m-%d %H:%M") }}{% endif %} · confidence {{ "%.0f"|format(e.analysis.confidence * 100) }}%</div>
+    </div>
+    <div class="badges">
+      <span class="badge {{ e.analysis.impact_level.value|lower }}">{{ e.analysis.impact_level.value }}</span>
+      <span class="badge {{ e.analysis.impact_direction.value|lower }}">{{ e.analysis.impact_direction.value }}</span>
+      <span class="badge">{{ e.analysis.time_horizon.value }}</span>
+    </div>
+  </div>
+  <div class="event-body">
+    <p>{{ e.analysis.summary }}</p>
+    {% if e.analysis.why_it_matters %}<p class="why"><b>Why it matters:</b> {{ e.analysis.why_it_matters }}</p>{% endif %}
+    {% if e.analysis.affected_sectors or e.analysis.affected_assets %}
+    <div class="badges" style="margin-top:8px;">
+      {% for s in e.analysis.affected_sectors %}<span class="badge">{{ s }}</span>{% endfor %}
+      {% for a in e.analysis.affected_assets %}<span class="badge">{{ a }}</span>{% endfor %}
+    </div>
+    {% endif %}
+    {% if e.analysis.rationale %}<p class="rationale">{{ e.analysis.rationale }}</p>{% endif %}
+  </div>
+</div>
+{%- endmacro %}
+
+<div class="container">
+
+<header>
+  <h1>Daily Market Intelligence</h1>
+  <div class="subtitle">{{ report.date }} · generated {{ report.generated_at.strftime("%Y-%m-%d %H:%M UTC") }}</div>
+</header>
+
+<section>
+  <h2>Executive Summary</h2>
+  <div class="summary">{{ report.executive_summary }}</div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="label">Items collected</div>
+      <div class="value">{{ report.total_items_collected }}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Items analysed</div>
+      <div class="value">{{ report.total_items_analyzed }}</div>
+    </div>
+    <div class="stat">
+      <div class="label">High-impact</div>
+      <div class="value">{{ report.high_impact_events|length }}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Medium-impact</div>
+      <div class="value">{{ report.medium_impact_events|length }}</div>
+    </div>
+  </div>
+</section>
+
+{% if report.high_impact_events %}
+<section>
+  <h2>High-impact Events</h2>
+  {% for e in report.high_impact_events %}
+    {{ render_event(e) }}
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if report.medium_impact_events %}
+<section>
+  <h2>Medium-impact Events</h2>
+  {% for e in report.medium_impact_events %}
+    {{ render_event(e) }}
+  {% endfor %}
+</section>
+{% endif %}
+
+<section>
+  <h2>Aggregate View</h2>
+  <div class="grid">
+    <div class="panel">
+      <h3>Top affected sectors</h3>
+      <ul>
+        {% for sector, count in report.sector_summary.items() %}
+          <li><b>{{ sector }}</b> — {{ count }}</li>
+        {% else %}
+          <li>None</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Top affected assets</h3>
+      <ul>
+        {% for asset, count in report.asset_summary.items() %}
+          <li><b>{{ asset }}</b> — {{ count }}</li>
+        {% else %}
+          <li>None</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<footer>
+  Generated by the AI Market Intelligence Agent ·
+  {{ report.sources_used|length }} sources ·
+  This report is for informational purposes only and does not constitute investment advice.
+</footer>
+
+</div>
+
+
+</body>
+</html>

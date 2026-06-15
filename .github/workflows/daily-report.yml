@@ -1,0 +1,76 @@
+name: daily-market-intelligence
+
+# Free daily run on GitHub Actions. Runs the full pipeline at 07:30 UTC,
+# emails the report, and commits the rendered HTML + Markdown back to the
+# `reports/` branch for an always-up-to-date public archive.
+
+on:
+  schedule:
+    - cron: "30 7 * * *"   # 07:30 UTC every day
+  workflow_dispatch:       # manual trigger
+
+permissions:
+  contents: write          # required for committing the report
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install WeasyPrint runtime deps
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libpango-1.0-0 libpangoft2-1.0-0 libcairo2 \
+            libgdk-pixbuf-2.0-0 libffi-dev shared-mime-info
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Run pipeline
+        env:
+          LLM_PROVIDER:        ${{ secrets.LLM_PROVIDER }}
+          LLM_MODEL:           ${{ secrets.LLM_MODEL }}
+          GROQ_API_KEY:        ${{ secrets.GROQ_API_KEY }}
+          ANTHROPIC_API_KEY:   ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY:      ${{ secrets.OPENAI_API_KEY }}
+          SMTP_HOST:           ${{ secrets.SMTP_HOST }}
+          SMTP_PORT:           ${{ secrets.SMTP_PORT }}
+          SMTP_USER:           ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD:       ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_FROM:          ${{ secrets.EMAIL_FROM }}
+          EMAIL_TO:            ${{ secrets.EMAIL_TO }}
+          DATABASE_URL:        sqlite:///data/intel.db
+          MAX_ITEMS_TO_ANALYZE: "25"
+        run: python -m src.main run-once
+
+      - name: Upload report as workflow artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-report-${{ github.run_number }}
+          path: data/reports/
+          retention-days: 30
+
+      - name: Commit report back to repo (optional)
+        if: success()
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          DATE=$(date -u +%Y-%m-%d)
+          mkdir -p public/reports
+          if [ -d "data/reports/$DATE" ]; then
+            cp -r "data/reports/$DATE" "public/reports/"
+            git add public/reports
+            git diff --cached --quiet || git commit -m "report: $DATE"
+            git push || true
+          fi

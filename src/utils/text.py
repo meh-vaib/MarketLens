@@ -1,4 +1,5 @@
 """Lightweight text helpers (no heavy NLP deps)."""
+
 from __future__ import annotations
 
 import re
@@ -37,13 +38,11 @@ def summarize_text(text: str, max_sentences: int = 2) -> str:
 # Near-duplicate detection
 # --------------------------------------------------------------------------- #
 # Common words that carry no signal when comparing headlines for similarity.
-_STOPWORDS = frozenset(
-    """
+_STOPWORDS = frozenset("""
     a an and as at be but by for from has have in into is it its of on or that
     the to vs was were will with after over amid says say said new news report
     reports update updates breaking live latest
-    """.split()
-)
+    """.split())
 _WORD_RE = re.compile(r"[a-z0-9]+")
 
 

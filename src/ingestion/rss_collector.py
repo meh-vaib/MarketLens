@@ -4,6 +4,7 @@ We use ``httpx`` for fetching (so the feed download itself is async-friendly)
 and ``feedparser`` for parsing - feedparser is synchronous but extremely
 robust against the chaos of real-world feeds.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -32,7 +33,9 @@ class RSSCollector(BaseCollector):
             async with httpx.AsyncClient(
                 timeout=settings.request_timeout_seconds,
                 follow_redirects=True,
-                headers={"User-Agent": "MarketIntelAgent/1.0 (+github.com/yours/ai-market-intelligence)"},
+                headers={
+                    "User-Agent": "MarketIntelAgent/1.0 (+github.com/yours/ai-market-intelligence)"
+                },
             ) as client:
                 resp = await client.get(self.url)
                 resp.raise_for_status()

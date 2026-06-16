@@ -4,6 +4,7 @@ Uses ``respx`` semantics via a custom monkey-patched httpx transport so we
 don't have to add a new dependency. The mock response mirrors the actual
 GDELT JSON payload shape.
 """
+
 from __future__ import annotations
 
 import json
@@ -65,7 +66,7 @@ class _StubTransport(httpx.AsyncBaseTransport):
 async def test_gdelt_collector_parses_articles():
     collector = GDELTCollector(
         name="Macro Test",
-        query="inflation OR \"Federal Reserve\"",
+        query='inflation OR "Federal Reserve"',
         timespan="24h",
         category="macro",
     )

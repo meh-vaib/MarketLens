@@ -1,4 +1,5 @@
 """Generic JSON-API collector with first-class NewsAPI support."""
+
 from __future__ import annotations
 
 import os

@@ -4,6 +4,7 @@ This is the orchestrator that ties every component together. It is callable
 both as a CLI command (``python -m src.main run-once``) and from the
 scheduler / API.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -79,9 +80,7 @@ def run_pipeline() -> PipelineResult:
     except Exception as e:  # noqa: BLE001
         log.exception(f"pipeline failed: {e}")
         db.finish_run(run_id, status="failed", items_collected=0, items_analyzed=0, error=str(e))
-        return PipelineResult(
-            status="failed", items_collected=0, items_analyzed=0, error=str(e)
-        )
+        return PipelineResult(status="failed", items_collected=0, items_analyzed=0, error=str(e))
 
 
 # --------------------------------------------------------------------------- #
@@ -94,7 +93,9 @@ def _filter(items: list[NewsItem]) -> list[ScoredNewsItem]:
     s = get_settings()
     f = RelevanceFilter(threshold=s.relevance_threshold)
     scored = f.filter(items)
-    log.info(f"  relevance filter kept {len(scored)}/{len(items)} items (threshold={s.relevance_threshold})")
+    log.info(
+        f"  relevance filter kept {len(scored)}/{len(items)} items (threshold={s.relevance_threshold})"
+    )
     # Drop items already analyzed in a previous run (deduplicate across days)
     seen = get_db().already_seen([s.item.id for s in scored])
     fresh = [s_ for s_ in scored if s_.item.id not in seen]

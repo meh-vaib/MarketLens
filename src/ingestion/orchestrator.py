@@ -1,4 +1,5 @@
 """Concurrent multi-source ingestion."""
+
 from __future__ import annotations
 
 import asyncio
@@ -107,8 +108,10 @@ class IngestionOrchestrator:
 
         deduped = _dedupe_near_duplicates(items)
         if len(deduped) < len(items):
-            log.info(f"near-duplicate filter removed {len(items) - len(deduped)} items, "
-                     f"{len(deduped)} remain")
+            log.info(
+                f"near-duplicate filter removed {len(items) - len(deduped)} items, "
+                f"{len(deduped)} remain"
+            )
         return deduped
 
 

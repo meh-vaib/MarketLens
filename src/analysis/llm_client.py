@@ -3,6 +3,7 @@
 Supports Anthropic, OpenAI, and Ollama (local). The interface is intentionally
 small: ``complete(system, user) -> str``.
 """
+
 from __future__ import annotations
 
 import json

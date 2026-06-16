@@ -1,4 +1,5 @@
 """Abstract base class for any news collector."""
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

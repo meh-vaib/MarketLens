@@ -1,4 +1,5 @@
 """Render the daily report into HTML, Markdown, and (optionally) PDF."""
+
 from __future__ import annotations
 
 from datetime import datetime

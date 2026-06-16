@@ -10,6 +10,7 @@ records: ``url``, ``title``, ``seendate``, ``socialimage``, ``domain``,
 
 Docs: https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -158,8 +159,7 @@ class GDELTCollector(BaseCollector):
             except Exception as e:  # noqa: BLE001
                 log.debug(f"[{self.name}] skipping malformed GDELT record: {e}")
 
-        log.info(f"[{self.name}] GDELT returned {len(items)} items "
-                 f"(timespan={self.timespan})")
+        log.info(f"[{self.name}] GDELT returned {len(items)} items " f"(timespan={self.timespan})")
         return items
 
 

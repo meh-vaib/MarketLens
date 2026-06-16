@@ -1,4 +1,5 @@
 """SMTP email delivery."""
+
 from __future__ import annotations
 
 import smtplib
@@ -61,9 +62,7 @@ class EmailSender:
                 path = Path(path)
                 data = path.read_bytes()
                 maintype, subtype = _guess_mime(path)
-                msg.add_attachment(
-                    data, maintype=maintype, subtype=subtype, filename=path.name
-                )
+                msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=path.name)
             except Exception as e:  # noqa: BLE001
                 log.warning(f"failed to attach {path}: {e}")
 

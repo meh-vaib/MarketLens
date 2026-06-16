@@ -4,6 +4,7 @@ Each news item is reasoned about by an LLM following a structured prompt
 (see ``prompts.py``). The LLM returns a JSON object that we validate against
 :class:`src.schemas.MarketAnalysis`.
 """
+
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed

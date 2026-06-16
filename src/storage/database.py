@@ -1,4 +1,5 @@
 """Thin wrapper around SQLAlchemy 2.x for our persistence needs."""
+
 from __future__ import annotations
 
 import json
@@ -86,9 +87,7 @@ class Database:
         with self.session() as s:
             return list(
                 s.execute(
-                    select(EventRecord)
-                    .order_by(desc(EventRecord.fetched_at))
-                    .limit(limit)
+                    select(EventRecord).order_by(desc(EventRecord.fetched_at)).limit(limit)
                 ).scalars()
             )
 

@@ -50,11 +50,17 @@ def test_analyze_one_returns_none_when_llm_fails():
 def test_analyze_many_skips_irrelevant_events():
     fake_client = MagicMock()
     fake_client.complete_json.return_value = {
-        "headline": "x", "summary": "x", "why_it_matters": "",
-        "impact_level": "NONE", "impact_direction": "NEUTRAL",
+        "headline": "x",
+        "summary": "x",
+        "why_it_matters": "",
+        "impact_level": "NONE",
+        "impact_direction": "NEUTRAL",
         "time_horizon": "SHORT_TERM",
-        "affected_sectors": [], "affected_assets": [], "affected_regions": [],
-        "confidence": 0.1, "rationale": "",
+        "affected_sectors": [],
+        "affected_assets": [],
+        "affected_regions": [],
+        "confidence": 0.1,
+        "rationale": "",
     }
     agent = MarketAnalyzerAgent(client=fake_client, max_workers=1)
     out = agent.analyze_many([ScoredNewsItem(item=_make_item(), relevance_score=1.0)])

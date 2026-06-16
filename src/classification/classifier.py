@@ -4,6 +4,7 @@ The LLM already labels each event individually. This module adds aggregate
 views (counts by sector, asset, region, impact level) used by the report
 generator and downstream analytics.
 """
+
 from __future__ import annotations
 
 from collections import Counter

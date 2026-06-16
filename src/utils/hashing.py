@@ -1,4 +1,5 @@
 """Stable hashing helpers for deduplication."""
+
 from __future__ import annotations
 
 import hashlib

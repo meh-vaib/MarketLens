@@ -3,6 +3,7 @@
 Keeping prompts here (rather than scattered as f-strings) makes them
 reviewable, diffable, and easy to evaluate.
 """
+
 from __future__ import annotations
 
 PROMPT_VERSION = "v1.0"

@@ -6,6 +6,7 @@ Usage::
     python -m src.main schedule              # block forever, run daily
     python -m src.main serve [--host ... --port ...]   # FastAPI dashboard
 """
+
 from __future__ import annotations
 
 import argparse

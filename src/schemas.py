@@ -3,6 +3,7 @@
 Every stage takes & returns one of these models, which makes the system easy
 to test and refactor.
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -30,9 +31,9 @@ class ImpactDirection(StrEnum):
 
 class TimeHorizon(StrEnum):
     INTRADAY = "INTRADAY"
-    SHORT_TERM = "SHORT_TERM"   # days
-    MEDIUM_TERM = "MEDIUM_TERM" # weeks
-    LONG_TERM = "LONG_TERM"     # months+
+    SHORT_TERM = "SHORT_TERM"  # days
+    MEDIUM_TERM = "MEDIUM_TERM"  # weeks
+    LONG_TERM = "LONG_TERM"  # months+
 
 
 # --------------------------------------------------------------------------- #
@@ -100,7 +101,7 @@ class DailyReport(BaseModel):
     high_impact_events: list[AnalyzedEvent] = Field(default_factory=list)
     medium_impact_events: list[AnalyzedEvent] = Field(default_factory=list)
     sector_summary: dict = Field(default_factory=dict)  # sector -> count
-    asset_summary: dict = Field(default_factory=dict)   # asset -> count
+    asset_summary: dict = Field(default_factory=dict)  # asset -> count
     sources_used: list[str] = Field(default_factory=list)
     total_items_collected: int = 0
     total_items_analyzed: int = 0

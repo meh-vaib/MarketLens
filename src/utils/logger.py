@@ -3,6 +3,7 @@
 We deliberately avoid the stdlib ``logging`` module because Loguru gives us
 structured logs, automatic rotation, and clean formatting with zero ceremony.
 """
+
 from __future__ import annotations
 
 import sys

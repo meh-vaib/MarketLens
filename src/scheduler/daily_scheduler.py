@@ -3,6 +3,7 @@
 We use a blocking scheduler so this module can be the long-lived process
 inside a Docker container.
 """
+
 from __future__ import annotations
 
 import signal

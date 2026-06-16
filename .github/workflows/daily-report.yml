@@ -49,8 +49,9 @@ jobs:
           SMTP_PASSWORD:       ${{ secrets.SMTP_PASSWORD }}
           EMAIL_FROM:          ${{ secrets.EMAIL_FROM }}
           EMAIL_TO:            ${{ secrets.EMAIL_TO }}
+          EMAIL_ENABLED:       ${{ secrets.EMAIL_ENABLED || 'true' }}
           DATABASE_URL:        sqlite:///data/intel.db
-          MAX_ITEMS_TO_ANALYZE: "25"
+          MAX_ITEMS_TO_ANALYZE: "100"
         run: python -m src.main run-once
 
       - name: Upload report as workflow artifact

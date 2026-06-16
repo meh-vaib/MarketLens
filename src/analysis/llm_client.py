@@ -6,7 +6,8 @@ small: ``complete(system, user) -> str``.
 from __future__ import annotations
 
 import json
-from typing import Optional
+import re
+import time
 
 import httpx
 
@@ -14,6 +15,27 @@ from config import get_settings
 from src.utils import get_logger
 
 log = get_logger("llm")
+
+_MAX_RETRIES = 5
+# Matches "try again in 3.915s" in provider 429 messages.
+_RETRY_AFTER_RE = re.compile(r"try again in ([\d.]+)s", re.IGNORECASE)
+
+
+def _rate_limit_wait(exc: Exception) -> float | None:
+    """If ``exc`` is a rate-limit (429) error, return seconds to wait; else None.
+
+    Honours the provider-supplied "try again in Xs" hint when present, with a
+    small safety margin, and falls back to a fixed backoff otherwise.
+    """
+    msg = str(exc)
+    status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    is_429 = status == 429 or "429" in msg or "rate_limit" in msg.lower()
+    if not is_429:
+        return None
+    m = _RETRY_AFTER_RE.search(msg)
+    if m:
+        return float(m.group(1)) + 0.5
+    return 5.0
 
 
 class LLMClient:
@@ -72,24 +94,33 @@ class LLMClient:
 
     # ------------------------------------------------------------------ #
     def complete(self, system: str, user: str) -> str:
-        """Synchronous text completion."""
-        try:
-            if self.provider == "anthropic":
-                return self._complete_anthropic(system, user)
-            if self.provider == "openai":
-                return self._complete_openai(system, user)
-            if self.provider == "ollama":
-                return self._complete_ollama(system, user)
-            if self.provider == "groq":
-                # Same wire protocol as OpenAI, different host.
-                return self._complete_openai(system, user)
-        except Exception as e:  # noqa: BLE001
-            log.error(f"LLM call failed ({self.provider}): {e}")
-            return ""
+        """Synchronous text completion, with retry on rate-limit (429)."""
+        for attempt in range(_MAX_RETRIES):
+            try:
+                if self.provider == "anthropic":
+                    return self._complete_anthropic(system, user)
+                if self.provider == "openai":
+                    return self._complete_openai(system, user)
+                if self.provider == "ollama":
+                    return self._complete_ollama(system, user)
+                if self.provider == "groq":
+                    # Same wire protocol as OpenAI, different host.
+                    return self._complete_openai(system, user)
+            except Exception as e:  # noqa: BLE001
+                wait = _rate_limit_wait(e)
+                if wait is not None and attempt < _MAX_RETRIES - 1:
+                    log.warning(
+                        f"LLM rate-limited ({self.provider}), retrying in "
+                        f"{wait:.1f}s (attempt {attempt + 1}/{_MAX_RETRIES})"
+                    )
+                    time.sleep(wait)
+                    continue
+                log.error(f"LLM call failed ({self.provider}): {e}")
+                return ""
         return ""
 
     # ------------------------------------------------------------------ #
-    def complete_json(self, system: str, user: str) -> Optional[dict]:
+    def complete_json(self, system: str, user: str) -> dict | None:
         """Call the model and parse a JSON object out of the response.
 
         Robust to models that wrap JSON in markdown code fences.
@@ -159,7 +190,7 @@ class LLMClient:
             return r.json().get("message", {}).get("content", "")
 
 
-_CLIENT: Optional[LLMClient] = None
+_CLIENT: LLMClient | None = None
 
 
 def get_llm_client() -> LLMClient:

@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import asyncio
 from datetime import datetime
-from typing import List, Optional
 
 import httpx
 
@@ -29,9 +28,18 @@ log = get_logger("gdelt")
 # Default endpoint - the public, key-less DOC 2.0 API
 GDELT_DOC_API = "https://api.gdeltproject.org/api/v2/doc/doc"
 
-# Serialize all GDELT requests to avoid 429s on the free, key-less API
-_gdelt_semaphore = asyncio.Semaphore(1)
-_GDELT_REQUEST_DELAY = 2.0  # seconds between requests
+# Serialize all GDELT requests to avoid 429s on the free, key-less API.
+# Lazily initialized so it is always bound to the running event loop (creating
+# asyncio primitives at module-import time breaks in Python 3.10+).
+_gdelt_semaphore: asyncio.Semaphore | None = None
+_GDELT_REQUEST_DELAY = 5.0  # seconds between requests; GDELT free tier needs 5+
+
+
+def _get_semaphore() -> asyncio.Semaphore:
+    global _gdelt_semaphore
+    if _gdelt_semaphore is None:
+        _gdelt_semaphore = asyncio.Semaphore(1)
+    return _gdelt_semaphore
 
 
 class GDELTCollector(BaseCollector):
@@ -55,8 +63,8 @@ class GDELTCollector(BaseCollector):
         query: str,
         timespan: str = "24h",
         sort: str = "DateDesc",
-        country_filter: Optional[str] = None,
-        language_filter: Optional[str] = "eng",
+        country_filter: str | None = None,
+        language_filter: str | None = "eng",
         category: str = "general",
         region: str = "global",
     ) -> None:
@@ -67,7 +75,7 @@ class GDELTCollector(BaseCollector):
 
     # ------------------------------------------------------------------ #
     @staticmethod
-    def _compose_query(query: str, country: Optional[str], language: Optional[str]) -> str:
+    def _compose_query(query: str, country: str | None, language: str | None) -> str:
         clauses = [query.strip()]
         if country:
             clauses.append(f"sourcecountry:{country}")
@@ -76,7 +84,7 @@ class GDELTCollector(BaseCollector):
         return " ".join(c for c in clauses if c)
 
     # ------------------------------------------------------------------ #
-    async def fetch(self, limit: int) -> List[NewsItem]:
+    async def fetch(self, limit: int) -> list[NewsItem]:
         settings = get_settings()
         params = {
             "query": self.query,
@@ -86,23 +94,37 @@ class GDELTCollector(BaseCollector):
             "timespan": self.timespan,
             "sort": self.sort,
         }
-        try:
-            async with _gdelt_semaphore:
-                async with httpx.AsyncClient(
-                    timeout=settings.request_timeout_seconds,
-                    follow_redirects=True,
-                    headers={"User-Agent": "MarketIntelAgent/1.0 (gdelt-collector)"},
-                ) as client:
-                    resp = await client.get(GDELT_DOC_API, params=params)
-                    resp.raise_for_status()
-                    payload = resp.json()
-                await asyncio.sleep(_GDELT_REQUEST_DELAY)
-        except Exception as e:  # noqa: BLE001
-            log.warning(f"[{self.name}] GDELT fetch failed: {e}")
+        payload = None
+        async with _get_semaphore():
+            async with httpx.AsyncClient(
+                timeout=settings.request_timeout_seconds,
+                follow_redirects=True,
+                headers={"User-Agent": "MarketIntelAgent/1.0 (gdelt-collector)"},
+            ) as client:
+                for attempt in range(3):
+                    try:
+                        resp = await client.get(GDELT_DOC_API, params=params)
+                        if resp.status_code == 429:
+                            wait = float(resp.headers.get("Retry-After", 5 * (attempt + 1)))
+                            log.warning(
+                                f"[{self.name}] GDELT 429, retrying in {wait:.0f}s "
+                                f"(attempt {attempt + 1}/3)"
+                            )
+                            await asyncio.sleep(wait)
+                            continue
+                        resp.raise_for_status()
+                        payload = resp.json()
+                        break
+                    except Exception as e:  # noqa: BLE001
+                        log.warning(f"[{self.name}] GDELT fetch failed: {e}")
+                        break
+            await asyncio.sleep(_GDELT_REQUEST_DELAY)
+
+        if payload is None:
             return []
 
         articles = payload.get("articles", []) or []
-        items: List[NewsItem] = []
+        items: list[NewsItem] = []
         for art in articles[:limit]:
             try:
                 title = clean_text(art.get("title", ""))
@@ -111,7 +133,6 @@ class GDELTCollector(BaseCollector):
                     continue
                 published = _parse_seendate(art.get("seendate"))
                 domain = art.get("domain") or ""
-                language = art.get("language") or ""
                 country = art.get("sourcecountry") or ""
 
                 # GDELT has no body; build a summary from available metadata.
@@ -143,7 +164,7 @@ class GDELTCollector(BaseCollector):
 
 
 # --------------------------------------------------------------------------- #
-def _parse_seendate(s: Optional[str]) -> Optional[datetime]:
+def _parse_seendate(s: str | None) -> datetime | None:
     """GDELT ``seendate`` format is ``YYYYMMDDTHHMMSSZ``."""
     if not s:
         return None

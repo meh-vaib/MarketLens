@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-from typing import Optional
 
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
@@ -92,7 +91,7 @@ def create_app() -> FastAPI:
 
     # ---------------------------------------------------------------- #
     @app.post("/run")
-    def trigger_run(x_api_key: Optional[str] = Header(None)):
+    def trigger_run(x_api_key: str | None = Header(None)):
         if not x_api_key or x_api_key != settings.api_key:
             raise HTTPException(401, "invalid API key")
         # Imported lazily to avoid a circular import at module load time
@@ -109,7 +108,7 @@ def create_app() -> FastAPI:
     return app
 
 
-def _safe_json(s: Optional[str]):
+def _safe_json(s: str | None):
     if not s:
         return []
     try:

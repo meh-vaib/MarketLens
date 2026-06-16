@@ -9,7 +9,6 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
 
 from config import get_settings
 from src.analysis import MarketAnalyzerAgent
@@ -29,8 +28,8 @@ class PipelineResult:
     status: str
     items_collected: int
     items_analyzed: int
-    report_date: Optional[str] = None
-    error: Optional[str] = None
+    report_date: str | None = None
+    error: str | None = None
 
 
 # --------------------------------------------------------------------------- #
@@ -46,7 +45,7 @@ def run_pipeline() -> PipelineResult:
 
     try:
         # 1. INGEST
-        items: List[NewsItem] = asyncio.run(_ingest())
+        items: list[NewsItem] = asyncio.run(_ingest())
         log.info(f"step 1/5: ingested {len(items)} items")
 
         # 2. FILTER
@@ -86,12 +85,12 @@ def run_pipeline() -> PipelineResult:
 
 
 # --------------------------------------------------------------------------- #
-async def _ingest() -> List[NewsItem]:
+async def _ingest() -> list[NewsItem]:
     orch = IngestionOrchestrator()
     return await orch.collect_all()
 
 
-def _filter(items: List[NewsItem]) -> List[ScoredNewsItem]:
+def _filter(items: list[NewsItem]) -> list[ScoredNewsItem]:
     s = get_settings()
     f = RelevanceFilter(threshold=s.relevance_threshold)
     scored = f.filter(items)
@@ -108,12 +107,12 @@ def _filter(items: List[NewsItem]) -> List[ScoredNewsItem]:
     return capped
 
 
-def _analyze(scored: List[ScoredNewsItem]) -> List[AnalyzedEvent]:
+def _analyze(scored: list[ScoredNewsItem]) -> list[AnalyzedEvent]:
     agent = MarketAnalyzerAgent()
     return agent.analyze_many(scored)
 
 
-def _report_and_deliver(events: List[AnalyzedEvent], total_collected: int) -> str:
+def _report_and_deliver(events: list[AnalyzedEvent], total_collected: int) -> str:
     generator = ReportGenerator()
     sources_used = sorted({e.item.source for e in events})
     report = generator.build(

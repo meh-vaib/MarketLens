@@ -10,10 +10,9 @@ recall-friendly first pass. The LLM is the precision layer.
 from __future__ import annotations
 
 import re
-from typing import Iterable, List
+from collections.abc import Iterable
 
 from src.schemas import NewsItem, ScoredNewsItem
-
 
 # Domain-specific lexicons. Higher weight => stronger relevance signal.
 LEXICON: dict[str, float] = {
@@ -44,6 +43,13 @@ LEXICON: dict[str, float] = {
     # Tech / corporates that move indices
     "apple": 0.5, "microsoft": 0.5, "nvidia": 0.6, "tesla": 0.5, "amazon": 0.5,
     "alphabet": 0.5, "google": 0.4, "meta": 0.5, "openai": 0.4,
+    # India: indices, regulators, currency & bellwether names
+    "nifty": 1.2, "sensex": 1.2, "nse": 1.0, "bse": 1.0, "dalal street": 1.0,
+    "nifty 50": 1.2, "bank nifty": 1.1, "reserve bank of india": 1.2, "rbi": 1.2,
+    "sebi": 1.0, "rupee": 1.0, "inr": 0.8, "repo rate": 1.0, "mpc": 0.9,
+    "indian economy": 1.0, "indian markets": 1.0, "fii": 0.9, "dii": 0.9,
+    "reliance": 0.7, "tata": 0.6, "infosys": 0.7, "tcs": 0.7, "hdfc": 0.7,
+    "adani": 0.7, "icici": 0.6, "gst": 0.7, "union budget": 1.0,
 }
 
 NEGATIVE_LEXICON = {
@@ -70,7 +76,7 @@ class RelevanceFilter:
         if any(p.search(text) for p in self._negative):
             return ScoredNewsItem(item=item, relevance_score=0.0, matched_keywords=[])
 
-        matched: List[str] = []
+        matched: list[str] = []
         score = 0.0
         for pattern, weight in self._patterns:
             if pattern.search(text):
@@ -86,7 +92,7 @@ class RelevanceFilter:
         normalised = 1 - (1 / (1 + score))  # logistic-ish squashing
         return ScoredNewsItem(item=item, relevance_score=normalised, matched_keywords=matched)
 
-    def filter(self, items: Iterable[NewsItem]) -> List[ScoredNewsItem]:
+    def filter(self, items: Iterable[NewsItem]) -> list[ScoredNewsItem]:
         scored = [self.score(i) for i in items]
         kept = [s for s in scored if s.relevance_score >= self.threshold]
         kept.sort(key=lambda s: s.relevance_score, reverse=True)

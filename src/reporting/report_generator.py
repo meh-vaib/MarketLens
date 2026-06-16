@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -34,11 +33,11 @@ class ReportGenerator:
     # ------------------------------------------------------------------ #
     def build(
         self,
-        events: List[AnalyzedEvent],
+        events: list[AnalyzedEvent],
         *,
         total_items_collected: int,
-        sources_used: List[str],
-        date: Optional[str] = None,
+        sources_used: list[str],
+        date: str | None = None,
     ) -> DailyReport:
         date = date or datetime.utcnow().strftime("%Y-%m-%d")
         high, med, _low = EventClassifier.split_by_impact(events)
@@ -91,7 +90,7 @@ class ReportGenerator:
         return artefacts
 
     # ------------------------------------------------------------------ #
-    def _executive_summary(self, date: str, events: List[AnalyzedEvent]) -> str:
+    def _executive_summary(self, date: str, events: list[AnalyzedEvent]) -> str:
         if not events:
             return (
                 "No high- or medium-impact market-moving stories were detected today. "
@@ -118,7 +117,7 @@ class ReportGenerator:
         return text
 
     @staticmethod
-    def _fallback_summary(events: List[AnalyzedEvent]) -> str:
+    def _fallback_summary(events: list[AnalyzedEvent]) -> str:
         bull = sum(1 for e in events if e.analysis.impact_direction.value == "BULLISH")
         bear = sum(1 for e in events if e.analysis.impact_direction.value == "BEARISH")
         bias = "bullish" if bull > bear else "bearish" if bear > bull else "mixed"

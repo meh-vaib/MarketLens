@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import List
 
 from src.schemas import NewsItem
 
@@ -20,5 +19,5 @@ class BaseCollector(ABC):
         self.region = region
 
     @abstractmethod
-    async def fetch(self, limit: int) -> List[NewsItem]:
+    async def fetch(self, limit: int) -> list[NewsItem]:
         """Return up to ``limit`` items from this source."""

@@ -104,6 +104,36 @@ rss_sources:
     category: commodities
     region: global
 
+  # --- India: markets, economy & policy ---
+  - name: Economic Times - Markets
+    url: https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms
+    category: markets
+    region: india
+  - name: Economic Times - Economy
+    url: https://economictimes.indiatimes.com/news/economy/rssfeeds/1373380680.cms
+    category: macro
+    region: india
+  - name: Moneycontrol - Business
+    url: https://www.moneycontrol.com/rss/business.xml
+    category: markets
+    region: india
+  - name: Moneycontrol - Markets
+    url: https://www.moneycontrol.com/rss/marketreports.xml
+    category: markets
+    region: india
+  - name: Business Standard - Markets
+    url: https://www.business-standard.com/rss/markets-106.rss
+    category: markets
+    region: india
+  - name: Livemint - Markets
+    url: https://www.livemint.com/rss/markets
+    category: markets
+    region: india
+  - name: The Hindu BusinessLine - Markets
+    url: https://www.thehindubusinessline.com/markets/feeder/default.rss
+    category: markets
+    region: india
+
 # =============================================================================
 # GDELT Project queries (free, no API key, ~100k global sources, 15-min refresh)
 # Docs: https://blog.gdeltproject.org/gdelt-doc-2-0-api-debuts/
@@ -155,6 +185,14 @@ gdelt_sources:
     sort: HybridRel
     category: commodities
     region: global
+    enabled: true
+
+  - name: India Markets & Economy
+    query: '(Nifty OR Sensex OR NSE OR BSE OR "Reserve Bank of India" OR RBI OR rupee OR SEBI OR "Indian economy" OR "Indian markets" OR "Dalal Street")'
+    timespan: 24h
+    sort: HybridRel
+    category: markets
+    region: india
     enabled: true
 
 # Optional REST endpoints (require API keys in .env)

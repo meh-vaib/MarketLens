@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import os
 from datetime import datetime
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 
@@ -23,7 +23,7 @@ class NewsAPICollector(BaseCollector):
         self,
         name: str,
         endpoint: str,
-        params: Dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
         api_key_env: str = "NEWSAPI_KEY",
         category: str = "general",
         region: str = "global",
@@ -33,7 +33,7 @@ class NewsAPICollector(BaseCollector):
         self.params = dict(params or {})
         self.api_key = os.getenv(api_key_env, "")
 
-    async def fetch(self, limit: int) -> List[NewsItem]:
+    async def fetch(self, limit: int) -> list[NewsItem]:
         if not self.api_key:
             log.warning(f"[{self.name}] missing API key, skipping")
             return []
@@ -48,7 +48,7 @@ class NewsAPICollector(BaseCollector):
             log.warning(f"[{self.name}] fetch failed: {e}")
             return []
 
-        items: List[NewsItem] = []
+        items: list[NewsItem] = []
         for art in payload.get("articles", [])[:limit]:
             title = clean_text(art.get("title", ""))
             url = art.get("url", "")

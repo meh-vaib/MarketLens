@@ -7,7 +7,6 @@ Each news item is reasoned about by an LLM following a structured prompt
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import List
 
 from pydantic import ValidationError
 
@@ -31,8 +30,14 @@ log = get_logger("analyzer")
 class MarketAnalyzerAgent:
     """LLM-powered market impact analyst."""
 
-    def __init__(self, client: LLMClient | None = None, max_workers: int = 4) -> None:
+    # Free-tier hosted APIs and local single-GPU Ollama choke on parallelism,
+    # so cap concurrency per provider to stay under rate limits.
+    _PROVIDER_WORKERS = {"groq": 1, "ollama": 1, "openai": 4, "anthropic": 4}
+
+    def __init__(self, client: LLMClient | None = None, max_workers: int | None = None) -> None:
         self.client = client or get_llm_client()
+        if max_workers is None:
+            max_workers = self._PROVIDER_WORKERS.get(self.client.provider, 2)
         self.max_workers = max_workers
 
     # ------------------------------------------------------------------ #
@@ -61,21 +66,26 @@ class MarketAnalyzerAgent:
         return AnalyzedEvent(item=item, analysis=analysis)
 
     # ------------------------------------------------------------------ #
-    def analyze_many(self, scored: List[ScoredNewsItem]) -> List[AnalyzedEvent]:
+    def analyze_many(self, scored: list[ScoredNewsItem]) -> list[AnalyzedEvent]:
         """Analyse a batch of pre-filtered items concurrently."""
-        results: List[AnalyzedEvent] = []
+        results: list[AnalyzedEvent] = []
         if not scored:
             return results
 
+        total = len(scored)
+        done = 0
         with ThreadPoolExecutor(max_workers=self.max_workers) as ex:
             futures = {ex.submit(self.analyze_one, s.item): s for s in scored}
             for fut in as_completed(futures):
+                done += 1
                 try:
                     ev = fut.result()
                     if ev:
                         results.append(ev)
                 except Exception as e:  # noqa: BLE001
                     log.warning(f"analyzer worker failed: {e}")
+                if done % 5 == 0 or done == total:
+                    log.info(f"  analyzed {done}/{total} items")
 
         # Sort by impact_level desc, then confidence desc
         priority = {

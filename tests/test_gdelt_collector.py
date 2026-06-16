@@ -15,7 +15,6 @@ import pytest
 
 from src.ingestion.gdelt_collector import GDELTCollector
 
-
 # Real GDELT response shape (trimmed, with realistic field values)
 SAMPLE_GDELT_RESPONSE = {
     "articles": [

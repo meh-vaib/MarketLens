@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from datetime import datetime
 from email.utils import parsedate_to_datetime
-from typing import List
 
 import feedparser
 import httpx
@@ -27,7 +26,7 @@ class RSSCollector(BaseCollector):
         super().__init__(name=name, category=category, region=region)
         self.url = url
 
-    async def fetch(self, limit: int) -> List[NewsItem]:
+    async def fetch(self, limit: int) -> list[NewsItem]:
         settings = get_settings()
         try:
             async with httpx.AsyncClient(
@@ -43,7 +42,7 @@ class RSSCollector(BaseCollector):
             return []
 
         parsed = feedparser.parse(raw)
-        items: List[NewsItem] = []
+        items: list[NewsItem] = []
         for entry in parsed.entries[:limit]:
             try:
                 title = clean_text(entry.get("title", ""))

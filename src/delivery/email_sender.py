@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import smtplib
+from collections.abc import Iterable
 from email.message import EmailMessage
 from pathlib import Path
-from typing import Iterable, List, Optional
 
 from config import get_settings
 from src.utils import get_logger
@@ -22,7 +22,7 @@ class EmailSender:
         self.user = s.smtp_user
         self.password = s.smtp_password
         self.email_from = s.email_from
-        self.email_to: List[str] = s.email_to
+        self.email_to: list[str] = s.email_to
         self.enabled = s.email_enabled
 
     # ------------------------------------------------------------------ #
@@ -41,7 +41,7 @@ class EmailSender:
         self,
         subject: str,
         html: str,
-        markdown_text: Optional[str] = None,
+        markdown_text: str | None = None,
         attachments: Iterable[Path] | None = None,
     ) -> bool:
         if not self.is_configured():

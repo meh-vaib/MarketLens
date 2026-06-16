@@ -2,9 +2,9 @@
 from __future__ import annotations
 
 import json
+from collections.abc import Iterable
 from contextlib import contextmanager
 from datetime import datetime
-from typing import Iterable, List, Optional
 
 from sqlalchemy import create_engine, desc, select
 from sqlalchemy.orm import Session, sessionmaker
@@ -21,7 +21,7 @@ log = get_logger("storage")
 class Database:
     """Application-level data access object."""
 
-    def __init__(self, url: Optional[str] = None) -> None:
+    def __init__(self, url: str | None = None) -> None:
         url = url or get_settings().database_url
         connect_args = {"check_same_thread": False} if url.startswith("sqlite") else {}
         self.engine = create_engine(url, future=True, connect_args=connect_args)
@@ -82,7 +82,7 @@ class Database:
             rows = s.execute(select(EventRecord.id).where(EventRecord.id.in_(ids))).all()
         return {r[0] for r in rows}
 
-    def recent_events(self, limit: int = 50) -> List[EventRecord]:
+    def recent_events(self, limit: int = 50) -> list[EventRecord]:
         with self.session() as s:
             return list(
                 s.execute(
@@ -109,7 +109,7 @@ class Database:
         status: str,
         items_collected: int,
         items_analyzed: int,
-        error: Optional[str] = None,
+        error: str | None = None,
     ) -> None:
         with self.session() as s:
             run = s.get(RunRecord, run_id)
@@ -135,18 +135,18 @@ class Database:
             )
             s.merge(rec)
 
-    def get_report(self, date: str) -> Optional[ReportRecord]:
+    def get_report(self, date: str) -> ReportRecord | None:
         with self.session() as s:
             return s.get(ReportRecord, date)
 
-    def latest_report(self) -> Optional[ReportRecord]:
+    def latest_report(self) -> ReportRecord | None:
         with self.session() as s:
             return s.execute(
                 select(ReportRecord).order_by(desc(ReportRecord.date)).limit(1)
             ).scalar_one_or_none()
 
 
-_DB: Optional[Database] = None
+_DB: Database | None = None
 
 
 def get_db() -> Database:

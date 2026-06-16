@@ -3,14 +3,15 @@
 All values can be overridden via environment variables (see ``.env.example``).
 We use Pydantic-Settings so every field is validated and typed.
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
 from pathlib import Path
-from typing import List, Literal, Optional
+from typing import Annotated, Literal
 
 from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
@@ -34,18 +35,20 @@ class Settings(BaseSettings):
     llm_temperature: float = 0.2
     llm_max_tokens: int = 1500
 
-    anthropic_api_key: Optional[str] = None
-    openai_api_key: Optional[str] = None
+    anthropic_api_key: str | None = None
+    openai_api_key: str | None = None
     ollama_base_url: str = "http://localhost:11434"
-    groq_api_key: Optional[str] = None
+    groq_api_key: str | None = None
 
     # --- Email --------------------------------------------------------------
-    smtp_host: Optional[str] = None
+    smtp_host: str | None = None
     smtp_port: int = 587
-    smtp_user: Optional[str] = None
-    smtp_password: Optional[str] = None
-    email_from: Optional[str] = None
-    email_to: List[str] = Field(default_factory=list)
+    smtp_user: str | None = None
+    smtp_password: str | None = None
+    email_from: str | None = None
+    # NoDecode stops the env source from JSON-parsing the value so our
+    # comma-splitting validator below can handle plain "a@x.com,b@y.com".
+    email_to: Annotated[list[str], NoDecode] = Field(default_factory=list)
     email_enabled: bool = True
 
     # --- Schedule -----------------------------------------------------------
@@ -62,9 +65,9 @@ class Settings(BaseSettings):
     request_timeout_seconds: int = 15
 
     # --- Optional API keys --------------------------------------------------
-    newsapi_key: Optional[str] = None
-    fred_api_key: Optional[str] = None
-    alphavantage_key: Optional[str] = None
+    newsapi_key: str | None = None
+    fred_api_key: str | None = None
+    alphavantage_key: str | None = None
 
     # --- API server ---------------------------------------------------------
     api_host: str = "0.0.0.0"

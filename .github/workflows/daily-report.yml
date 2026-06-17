@@ -1,12 +1,11 @@
 name: daily-market-intelligence
 
-# Free daily run on GitHub Actions. Runs the full pipeline at 07:30 UTC,
-# emails the report, and commits the rendered HTML + Markdown back to the
-# `reports/` branch for an always-up-to-date public archive.
+# Free daily run on GitHub Actions. Runs the full pipeline once a day,
+# emails the report, and uploads it as an artifact for the Pages deploy.
 
 on:
   schedule:
-    - cron: "30 7 * * *"   # 07:30 UTC every day
+    - cron: "30 2 * * *"   # 02:30 UTC = 08:00 IST every day
   workflow_dispatch:       # manual trigger
 
 permissions:

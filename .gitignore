@@ -28,6 +28,9 @@ data/
 # Reports
 reports/
 
+# Generated static site (built fresh by scripts/build_pages.py in CI)
+public/
+
 # Test / coverage
 .pytest_cache/
 .coverage

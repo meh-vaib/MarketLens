@@ -18,25 +18,34 @@ from src.utils import get_logger
 log = get_logger("llm")
 
 _MAX_RETRIES = 5
+# Don't wait longer than this for a single retry; a longer "try again" hint
+# almost always means a per-day quota, which won't recover during this run.
+_MAX_RETRY_WAIT = 30.0
 # Matches "try again in 3.915s" in provider 429 messages.
 _RETRY_AFTER_RE = re.compile(r"try again in ([\d.]+)s", re.IGNORECASE)
 
 
 def _rate_limit_wait(exc: Exception) -> float | None:
-    """If ``exc`` is a rate-limit (429) error, return seconds to wait; else None.
+    """If ``exc`` is a *retryable* rate-limit (429), return seconds to wait.
 
-    Honours the provider-supplied "try again in Xs" hint when present, with a
-    small safety margin, and falls back to a fixed backoff otherwise.
+    Returns ``None`` for non-429 errors and for daily-quota (TPD) limits, since
+    retrying those just burns time — they only reset at the daily boundary.
+    Honours the provider-supplied "try again in Xs" hint with a safety margin.
     """
     msg = str(exc)
     status = getattr(exc, "status_code", None) or getattr(exc, "code", None)
     is_429 = status == 429 or "429" in msg or "rate_limit" in msg.lower()
     if not is_429:
         return None
+    # Per-day quota exhausted -> don't retry, surface it immediately.
+    if "per day" in msg.lower() or "tpd" in msg.lower():
+        return None
     m = _RETRY_AFTER_RE.search(msg)
-    if m:
-        return float(m.group(1)) + 0.5
-    return 5.0
+    wait = float(m.group(1)) + 0.5 if m else 5.0
+    # A multi-minute hint means a quota that won't clear during this run.
+    if wait > _MAX_RETRY_WAIT:
+        return None
+    return wait
 
 
 class LLMClient:

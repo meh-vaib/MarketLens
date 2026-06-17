@@ -61,17 +61,3 @@ jobs:
           name: daily-report-${{ github.run_number }}
           path: data/reports/
           retention-days: 30
-
-      - name: Commit report back to repo (optional)
-        if: success()
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          DATE=$(date -u +%Y-%m-%d)
-          mkdir -p public/reports
-          if [ -d "data/reports/$DATE" ]; then
-            cp -r "data/reports/$DATE" "public/reports/"
-            git add public/reports
-            git diff --cached --quiet || git commit -m "report: $DATE"
-            git push || true
-          fi

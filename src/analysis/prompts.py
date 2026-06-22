@@ -100,6 +100,7 @@ ANALYSED EVENTS (already filtered for relevance):
 
 Output format:
 - Plain prose, no bullet points.
+- Do NOT use any Markdown formatting (no **bold**, no ##headings, no backticks).
 - 200-350 words total.
 - End with one sentence titled "Outlook:" stating the near-term bias.
 """

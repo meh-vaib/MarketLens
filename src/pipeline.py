@@ -124,20 +124,24 @@ def _report_and_deliver(events: list[AnalyzedEvent], total_collected: int) -> st
     )
     artefacts = generator.render(report)
 
-    # Persist HTML/Markdown
+    # Persist the full HTML/Markdown (these go to the hosted site)
     html = artefacts["html"].read_text(encoding="utf-8")
     markdown = artefacts["markdown"].read_text(encoding="utf-8")
     get_db().save_report(report, html=html, markdown=markdown)
 
-    # Email delivery (best-effort)
+    # Email delivery (best-effort): send a condensed top-N digest with a link
+    # to the full report on the hosted site, rather than the entire report.
+    settings = get_settings()
     sender = EmailSender()
     if sender.is_configured():
-        attachments = [artefacts.get("pdf")] if artefacts.get("pdf") else None
+        report_url = settings.report_url(report.date)
+        digest_html, digest_text = generator.render_email_digest(
+            report, top_n=settings.email_top_n, report_url=report_url
+        )
         sender.send_report(
             subject=f"Market Intelligence — {report.date}",
-            html=html,
-            markdown_text=markdown,
-            attachments=[a for a in attachments or [] if a],
+            html=digest_html,
+            markdown_text=digest_text,
         )
 
     return report.date

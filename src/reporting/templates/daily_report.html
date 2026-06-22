@@ -106,6 +106,20 @@
   @media (max-width: 700px) {
     .grid { grid-template-columns: 1fr; }
   }
+
+  .event.is-hidden { display: none; }
+  .pager {
+    display: flex; align-items: center; justify-content: center; gap: 14px;
+    margin: 16px 0 8px;
+  }
+  .pager button {
+    background: var(--panel-2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 16px; font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .pager button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+  .pager button:disabled { opacity: .4; cursor: default; }
+  .pager .page-info { color: var(--muted); font-size: 13px; min-width: 110px; text-align: center; }
 </style>
 </head>
 <body>
@@ -146,7 +160,7 @@
 
 <section>
   <h2>Executive Summary</h2>
-  <div class="summary">{{ report.executive_summary }}</div>
+  <div class="summary">{{ report.executive_summary | md_bold }}</div>
 
   <div class="stats">
     <div class="stat">
@@ -171,18 +185,22 @@
 {% if report.high_impact_events %}
 <section>
   <h2>High-impact Events</h2>
+  <div class="event-list paginated" data-page-size="10">
   {% for e in report.high_impact_events %}
     {{ render_event(e) }}
   {% endfor %}
+  </div>
 </section>
 {% endif %}
 
 {% if report.medium_impact_events %}
 <section>
   <h2>Medium-impact Events</h2>
+  <div class="event-list paginated" data-page-size="10">
   {% for e in report.medium_impact_events %}
     {{ render_event(e) }}
   {% endfor %}
+  </div>
 </section>
 {% endif %}
 
@@ -220,6 +238,49 @@
 
 </div>
 
+<script>
+// Page-based pagination: each .paginated block shows data-page-size events
+// per page with Prev / Next controls.
+document.querySelectorAll(".paginated").forEach(function (block) {
+  var size = parseInt(block.getAttribute("data-page-size"), 10) || 10;
+  var events = Array.prototype.slice.call(block.querySelectorAll(".event"));
+  if (events.length <= size) return;
+
+  var pages = Math.ceil(events.length / size);
+  var current = 0;
+
+  var pager = document.createElement("div");
+  pager.className = "pager";
+  var prev = document.createElement("button");
+  prev.textContent = "← Prev";
+  var info = document.createElement("span");
+  info.className = "page-info";
+  var next = document.createElement("button");
+  next.textContent = "Next →";
+  pager.appendChild(prev);
+  pager.appendChild(info);
+  pager.appendChild(next);
+  block.appendChild(pager);
+
+  function render() {
+    var start = current * size;
+    var end = start + size;
+    events.forEach(function (el, i) {
+      el.classList.toggle("is-hidden", i < start || i >= end);
+    });
+    info.textContent = "Page " + (current + 1) + " of " + pages;
+    prev.disabled = current === 0;
+    next.disabled = current === pages - 1;
+  }
+  prev.addEventListener("click", function () {
+    if (current > 0) { current--; render(); block.scrollIntoView({ behavior: "smooth" }); }
+  });
+  next.addEventListener("click", function () {
+    if (current < pages - 1) { current++; render(); block.scrollIntoView({ behavior: "smooth" }); }
+  });
+  render();
+});
+</script>
 
 </body>
 </html>

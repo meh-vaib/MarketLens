@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
+from markupsafe import Markup, escape
 
 from config.settings import REPORT_DIR
 from src.analysis import get_llm_client
@@ -17,6 +19,29 @@ from src.utils import get_logger, truncate
 log = get_logger("report")
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
+
+_MD_BOLD_RE = re.compile(r"\*\*(.+?)\*\*", re.DOTALL)
+
+
+def md_bold(text: str) -> Markup:
+    """Render markdown ``**bold**`` as HTML <strong>, escaping everything else."""
+    if not text:
+        return Markup("")
+    parts = []
+    last = 0
+    for m in _MD_BOLD_RE.finditer(text):
+        parts.append(escape(text[last : m.start()]))
+        parts.append(Markup("<strong>") + escape(m.group(1)) + Markup("</strong>"))
+        last = m.end()
+    parts.append(escape(text[last:]))
+    return Markup("").join(parts)
+
+
+def strip_md(text: str) -> str:
+    """Remove markdown ``**`` markers for plain-text output."""
+    if not text:
+        return ""
+    return _MD_BOLD_RE.sub(r"\1", text)
 
 
 class ReportGenerator:
@@ -30,6 +55,8 @@ class ReportGenerator:
             trim_blocks=True,
             lstrip_blocks=True,
         )
+        self.env.filters["md_bold"] = md_bold
+        self.env.filters["strip_md"] = strip_md
 
     # ------------------------------------------------------------------ #
     def build(
@@ -89,6 +116,25 @@ class ReportGenerator:
 
         log.info(f"report rendered for {report.date} -> {out_dir}")
         return artefacts
+
+    # ------------------------------------------------------------------ #
+    def render_email_digest(
+        self,
+        report: DailyReport,
+        *,
+        top_n: int,
+        report_url: str | None,
+    ) -> tuple[str, str]:
+        """Render the condensed email body (top-N events + link to full report).
+
+        Returns ``(html, plain_text)``. Events are already impact-ranked, so the
+        top N are simply the first of high-impact followed by medium-impact.
+        """
+        top_events = (report.high_impact_events + report.medium_impact_events)[:top_n]
+        ctx = {"report": report, "events": top_events, "report_url": report_url}
+        html = self.env.get_template("email_digest.html").render(**ctx)
+        text = self.env.get_template("email_digest.md").render(**ctx)
+        return html, text
 
     # ------------------------------------------------------------------ #
     def _executive_summary(self, date: str, events: list[AnalyzedEvent]) -> str:

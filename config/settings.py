@@ -6,6 +6,7 @@ We use Pydantic-Settings so every field is validated and typed.
 
 from __future__ import annotations
 
+import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated, Literal
@@ -50,6 +51,14 @@ class Settings(BaseSettings):
     # comma-splitting validator below can handle plain "a@x.com,b@y.com".
     email_to: Annotated[list[str], NoDecode] = Field(default_factory=list)
     email_enabled: bool = True
+    # How many top-ranked events to include in the email digest. The full
+    # report (all events) is published to the hosted site and linked from
+    # the email.
+    email_top_n: int = 15
+    # Public base URL of the hosted report site, e.g.
+    # "https://meh-vaib.github.io/MarketLens". Auto-derived from
+    # GITHUB_REPOSITORY when unset (see ``report_url``).
+    site_base_url: str | None = None
 
     # --- Schedule -----------------------------------------------------------
     schedule_hour: int = 7
@@ -101,6 +110,23 @@ class Settings(BaseSettings):
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         LOG_DIR.mkdir(parents=True, exist_ok=True)
         REPORT_DIR.mkdir(parents=True, exist_ok=True)
+
+    def report_url(self, date: str) -> str | None:
+        """Public URL of a given day's full report on the hosted site.
+
+        Uses ``site_base_url`` if set, otherwise derives the GitHub Pages URL
+        from ``GITHUB_REPOSITORY`` (``owner/repo`` -> ``owner.github.io/repo``).
+        Returns ``None`` when no base URL can be determined.
+        """
+        base = self.site_base_url
+        if not base:
+            repo = os.environ.get("GITHUB_REPOSITORY", "")
+            if "/" in repo:
+                owner, name = repo.split("/", 1)
+                base = f"https://{owner}.github.io/{name}"
+        if not base:
+            return None
+        return f"{base.rstrip('/')}/reports/{date}.html"
 
 
 @lru_cache(maxsize=1)

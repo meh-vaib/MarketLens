@@ -5,7 +5,7 @@ name: daily-market-intelligence
 
 on:
   schedule:
-    - cron: "30 2 * * *"   # 02:30 UTC = 08:00 IST every day
+    - cron: "30 0 * * *"   # 00:30 UTC = 06:00 IST every day
   workflow_dispatch:       # manual trigger
 
 permissions:

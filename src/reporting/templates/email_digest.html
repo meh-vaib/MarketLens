@@ -2,110 +2,95 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Market Intelligence — {{ report.date }}</title>
+<!--
+  Email clients (Gmail etc.) do NOT support CSS variables and have patchy
+  flexbox support, so this template uses literal hex colors and a simple
+  block/inline-block layout only. Keep it that way.
+-->
 <style>
-  :root {
-    --bg: #0f1420; --panel: #161c2c; --panel-2: #1d2538; --text: #e6e9f2;
-    --muted: #9aa3b8; --accent: #5b8cff; --high: #ff5e6c; --medium: #ffb547;
-    --low: #62d489; --bull: #3ec28f; --bear: #ff6b6b; --mixed: #c39bff;
-    --neutral: #8a93aa; --border: #283149;
-  }
-  * { box-sizing: border-box; }
   body {
-    margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    margin: 0; padding: 0; background: #f4f6fb; color: #1a1f2e;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     line-height: 1.55;
   }
-  .container { max-width: 920px; margin: 0 auto; padding: 32px 24px 64px; }
-  header { border-bottom: 1px solid var(--border); padding-bottom: 24px; margin-bottom: 24px; }
-  h1 { margin: 0 0 6px; font-size: 28px; letter-spacing: -0.02em; }
-  .subtitle { color: var(--muted); font-size: 14px; }
-  h2 { font-size: 20px; margin: 28px 0 14px; letter-spacing: -0.01em; }
+  .container { max-width: 920px; margin: 0 auto; padding: 28px 22px 56px; }
+  .header { border-bottom: 1px solid #e2e6ef; padding-bottom: 20px; margin-bottom: 22px; }
+  .header h1 { margin: 0 0 6px; font-size: 26px; color: #0f1420; }
+  .subtitle { color: #6b7280; font-size: 14px; }
+  h2 { font-size: 19px; margin: 26px 0 14px; color: #0f1420; }
 
   .summary {
-    background: var(--panel); border: 1px solid var(--border);
-    border-left: 4px solid var(--accent); padding: 18px 22px;
-    border-radius: 8px; white-space: pre-wrap;
+    background: #ffffff; border: 1px solid #e2e6ef; border-left: 4px solid #2563eb;
+    padding: 16px 20px; border-radius: 8px; white-space: pre-wrap; color: #1a1f2e;
   }
-  .stats { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 18px; }
+  .stats { width: 100%; margin-top: 16px; }
   .stat {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 8px; padding: 12px 16px; flex: 1 1 160px;
+    display: inline-block; vertical-align: top; width: 23%; min-width: 120px;
+    background: #ffffff; border: 1px solid #e2e6ef; border-radius: 8px;
+    padding: 10px 14px; margin: 0 1% 8px 0;
   }
-  .stat .label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
-  .stat .value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+  .stat .label { color: #6b7280; font-size: 11px; text-transform: uppercase; letter-spacing: .06em; }
+  .stat .value { font-size: 21px; font-weight: 700; margin-top: 4px; color: #0f1420; }
 
-  .cta { text-align: center; margin: 28px 0; }
+  /* CTA button: solid fill + border so it is visible on any background. */
+  .cta { text-align: center; margin: 26px 0; }
   .cta a {
-    display: inline-block; background: var(--accent); color: #ffffff;
-    text-decoration: none; font-weight: 600; font-size: 15px;
-    padding: 13px 26px; border-radius: 8px;
+    display: inline-block; background: #2563eb; border: 1px solid #1d4ed8;
+    color: #ffffff !important; text-decoration: none; font-weight: 700; font-size: 15px;
+    padding: 13px 28px; border-radius: 8px;
   }
-  .cta .note { color: var(--muted); font-size: 13px; margin-top: 10px; }
+  .cta .note { color: #6b7280; font-size: 13px; margin-top: 10px; }
 
   .event {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 10px; padding: 16px 18px; margin-bottom: 14px;
+    background: #ffffff; border: 1px solid #e2e6ef; border-radius: 10px;
+    padding: 15px 18px; margin-bottom: 13px;
   }
-  .event-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-  .event-title { font-size: 16px; font-weight: 600; }
-  .event-title a { color: var(--text); text-decoration: none; }
-  .event-meta { color: var(--muted); font-size: 12px; margin-top: 4px; }
-  .event-body { margin-top: 10px; font-size: 14px; }
-  .event-body p { margin: 6px 0; }
-  .why { color: var(--text); }
+  .event-title { font-size: 16px; font-weight: 700; margin: 0 0 4px; }
+  .event-title a { color: #0f1420; text-decoration: none; }
+  .event-meta { color: #6b7280; font-size: 12px; margin-bottom: 10px; }
+  .event-body p { margin: 6px 0; font-size: 14px; }
+  .why { color: #1a1f2e; }
 
-  .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  /* Badges: inline-block pills, never flex, so they align on their own row. */
+  .badges { margin: 2px 0 0; }
   .badge {
-    font-size: 11px; padding: 3px 8px; border-radius: 999px;
-    border: 1px solid var(--border); background: var(--panel-2);
-    color: var(--text); white-space: nowrap;
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 3px 9px;
+    border-radius: 999px; border: 1px solid #d4d9e6; background: #eef1f7;
+    color: #3a4255; margin: 0 4px 4px 0; white-space: nowrap;
   }
-  .badge.high { background: rgba(255,94,108,.15); border-color: var(--high); color: var(--high); }
-  .badge.medium { background: rgba(255,181,71,.15); border-color: var(--medium); color: var(--medium); }
-  .badge.low { background: rgba(98,212,137,.15); border-color: var(--low); color: var(--low); }
-  .badge.bullish { background: rgba(62,194,143,.15); border-color: var(--bull); color: var(--bull); }
-  .badge.bearish { background: rgba(255,107,107,.15); border-color: var(--bear); color: var(--bear); }
-  .badge.mixed { background: rgba(195,155,255,.15); border-color: var(--mixed); color: var(--mixed); }
-  .badge.neutral { background: rgba(138,147,170,.12); border-color: var(--neutral); color: var(--neutral); }
+  .badge.high { background: #ffe5e8; border-color: #ff8a96; color: #c0303c; }
+  .badge.medium { background: #fff3df; border-color: #f0b860; color: #8a5a00; }
+  .badge.low { background: #e3f7ef; border-color: #74cba2; color: #1f8a63; }
+  .badge.bullish { background: #e3f7ef; border-color: #74cba2; color: #1f8a63; }
+  .badge.bearish { background: #ffe9e9; border-color: #ff9a9a; color: #c0303c; }
+  .badge.mixed { background: #f1e9ff; border-color: #c3a8f0; color: #6b3fb0; }
+  .badge.neutral { background: #eef0f4; border-color: #c2c8d4; color: #5a6273; }
 
-  footer {
-    border-top: 1px solid var(--border); margin-top: 40px; padding-top: 16px;
-    color: var(--muted); font-size: 12px;
+  .footer {
+    border-top: 1px solid #e2e6ef; margin-top: 36px; padding-top: 16px;
+    color: #6b7280; font-size: 12px;
   }
 </style>
 </head>
 <body>
 <div class="container">
 
-<header>
+<div class="header">
   <h1>Daily Market Intelligence</h1>
   <div class="subtitle">{{ report.date }} · generated {{ report.generated_at.strftime("%Y-%m-%d %H:%M UTC") }}</div>
-</header>
+</div>
 
-<section>
-  <h2>Executive Summary</h2>
-  <div class="summary">{{ report.executive_summary | md_bold }}</div>
+<h2>Executive Summary</h2>
+<div class="summary">{{ report.executive_summary | md_bold }}</div>
 
-  <div class="stats">
-    <div class="stat">
-      <div class="label">Items collected</div>
-      <div class="value">{{ report.total_items_collected }}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Items analysed</div>
-      <div class="value">{{ report.total_items_analyzed }}</div>
-    </div>
-    <div class="stat">
-      <div class="label">High-impact</div>
-      <div class="value">{{ report.high_impact_events|length }}</div>
-    </div>
-    <div class="stat">
-      <div class="label">Medium-impact</div>
-      <div class="value">{{ report.medium_impact_events|length }}</div>
-    </div>
-  </div>
-</section>
+<div class="stats">
+  <div class="stat"><div class="label">Items collected</div><div class="value">{{ report.total_items_collected }}</div></div>
+  <div class="stat"><div class="label">Items analysed</div><div class="value">{{ report.total_items_analyzed }}</div></div>
+  <div class="stat"><div class="label">High-impact</div><div class="value">{{ report.high_impact_events|length }}</div></div>
+  <div class="stat"><div class="label">Medium-impact</div><div class="value">{{ report.medium_impact_events|length }}</div></div>
+</div>
 
 {% if report_url %}
 <div class="cta">
@@ -114,27 +99,21 @@
 </div>
 {% endif %}
 
-<section>
-  <h2>Top {{ events|length }} Events</h2>
-  {% for e in events %}
-  <div class="event">
-    <div class="event-head">
-      <div>
-        <div class="event-title"><a href="{{ e.item.url }}" target="_blank" rel="noopener">{{ e.analysis.headline or e.item.title }}</a></div>
-        <div class="event-meta">{{ e.item.source }}{% if e.item.published_at %} · {{ e.item.published_at.strftime("%Y-%m-%d %H:%M") }}{% endif %} · confidence {{ "%.0f"|format(e.analysis.confidence * 100) }}%</div>
-      </div>
-      <div class="badges">
-        <span class="badge {{ e.analysis.impact_level.value|lower }}">{{ e.analysis.impact_level.value }}</span>
-        <span class="badge {{ e.analysis.impact_direction.value|lower }}">{{ e.analysis.impact_direction.value }}</span>
-      </div>
-    </div>
-    <div class="event-body">
-      <p>{{ e.analysis.summary }}</p>
-      {% if e.analysis.why_it_matters %}<p class="why"><b>Why it matters:</b> {{ e.analysis.why_it_matters }}</p>{% endif %}
-    </div>
+<h2>Top {{ events|length }} Events</h2>
+{% for e in events %}
+<div class="event">
+  <div class="event-title"><a href="{{ e.item.url }}" target="_blank" rel="noopener">{{ e.analysis.headline or e.item.title }}</a></div>
+  <div class="event-meta">{{ e.item.source }}{% if e.item.published_at %} · {{ e.item.published_at.strftime("%Y-%m-%d %H:%M") }}{% endif %} · confidence {{ "%.0f"|format(e.analysis.confidence * 100) }}%</div>
+  <div class="badges">
+    <span class="badge {{ e.analysis.impact_level.value|lower }}">{{ e.analysis.impact_level.value }}</span>
+    <span class="badge {{ e.analysis.impact_direction.value|lower }}">{{ e.analysis.impact_direction.value }}</span>
   </div>
-  {% endfor %}
-</section>
+  <div class="event-body">
+    <p>{{ e.analysis.summary }}</p>
+    {% if e.analysis.why_it_matters %}<p class="why"><b>Why it matters:</b> {{ e.analysis.why_it_matters }}</p>{% endif %}
+  </div>
+</div>
+{% endfor %}
 
 {% if report_url %}
 <div class="cta">
@@ -142,10 +121,10 @@
 </div>
 {% endif %}
 
-<footer>
+<div class="footer">
   Generated by MarketLens ·
   This report is for informational purposes only and does not constitute investment advice.
-</footer>
+</div>
 
 </div>
 </body>
